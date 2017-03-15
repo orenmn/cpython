@@ -4289,10 +4289,18 @@ static PyObject *
 long_rshift(PyLongObject *a, PyLongObject *b)
 {
     PyLongObject *z = NULL;
+    digit loshift_d;
+    PyLongObject *wordshift_obj;
     Py_ssize_t shiftby, newsize, wordshift, loshift, hishift, i, j;
     digit lomask, himask;
 
     CHECK_BINOP(a, b);
+
+    if (Py_SIZE(b) < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "negative shift count");
+        return NULL;
+    }
 
     if (Py_SIZE(a) < 0) {
         /* Right shifting negative numbers is harder */
@@ -4309,18 +4317,44 @@ long_rshift(PyLongObject *a, PyLongObject *b)
     }
     else {
         shiftby = PyLong_AsSsize_t((PyObject *)b);
-        if (shiftby == -1L && PyErr_Occurred())
-            return NULL;
-        if (shiftby < 0) {
-            PyErr_SetString(PyExc_ValueError,
-                            "negative shift count");
-            return NULL;
+        if (shiftby == -1L) {
+            /* PyLong_Check(b) and Py_SIZE(b) >= 0, so it must be that
+               PyLong_AsSsize_t raised an OverflowError because b is too large
+               to convert to C Py_ssize_t. */
+            assert(PyErr_Occurred());
+            PyErr_Clear();
+            
+            wordshift_obj = divrem1(b, PyLong_SHIFT, &loshift_d);
+            if (wordshift_obj == NULL) {
+                return NULL;
+            }
+            wordshift = PyLong_AsSsize_t((PyObject *)wordshift_obj);
+            if (wordshift == -1L) {
+                /* PyLong_Check(wordshift_obj) and Py_SIZE(wordshift_obj) > 0,
+                   so it must be that PyLong_AsSsize_t raised an OverflowError
+                   because wordshift_obj is too large to convert to C
+                   Py_ssize_t. Thus, wordshift must be bigger than
+                   Py_SIZE(a). */
+                assert(PyErr_Occurred());
+                PyErr_Clear();
+                Py_DECREF(wordshift_obj);
+                return PyLong_FromLong(0);
+            }
+            Py_DECREF(wordshift_obj);
+            
+            newsize = Py_ABS(Py_SIZE(a)) - wordshift;
+            if (newsize <= 0)
+                return PyLong_FromLong(0);
+            /* The cast is safe because 0 <= loshift_d < PyLong_SHIFT */
+            loshift = (Py_ssize_t)loshift_d;
         }
-        wordshift = shiftby / PyLong_SHIFT;
-        newsize = Py_ABS(Py_SIZE(a)) - wordshift;
-        if (newsize <= 0)
-            return PyLong_FromLong(0);
-        loshift = shiftby % PyLong_SHIFT;
+        else {
+            wordshift = shiftby / PyLong_SHIFT;
+            newsize = Py_ABS(Py_SIZE(a)) - wordshift;
+            if (newsize <= 0)
+                return PyLong_FromLong(0);
+            loshift = shiftby % PyLong_SHIFT;
+        }
         hishift = PyLong_SHIFT - loshift;
         lomask = ((digit)1 << hishift) - 1;
         himask = PyLong_MASK ^ lomask;
