@@ -4323,7 +4323,7 @@ long_rshift(PyLongObject *a, PyLongObject *b)
                to convert to C Py_ssize_t. */
             assert(PyErr_Occurred());
             PyErr_Clear();
-            
+
             wordshift_obj = divrem1(b, PyLong_SHIFT, &loshift_d);
             if (wordshift_obj == NULL) {
                 return NULL;
@@ -4341,7 +4341,7 @@ long_rshift(PyLongObject *a, PyLongObject *b)
                 return PyLong_FromLong(0);
             }
             Py_DECREF(wordshift_obj);
-            
+
             newsize = Py_ABS(Py_SIZE(a)) - wordshift;
             if (newsize <= 0)
                 return PyLong_FromLong(0);
