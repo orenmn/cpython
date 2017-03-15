@@ -505,23 +505,15 @@ byte_converter(PyObject *arg, char *p)
         else {
             iobj = PyNumber_Index(arg);
             if (iobj == NULL) {
-                assert(PyErr_Occurred());
-                if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+                if (!PyErr_ExceptionMatches(PyExc_TypeError))
                     return 0;
-                }
-                PyErr_SetString(PyExc_TypeError,
-                                "%c requires an integer in range(256) or a "
-                                "single byte");
-                return 0;
+                goto onError;
             }
             ival = PyLong_AsLongAndOverflow(iobj, &overflow);
             Py_DECREF(iobj);
         }
-        /* If we reached here, PyLong_AsLongAndOverflow was called
-           for an object such that PyLong_Check(object) is true, so
-           it is guaranteed that no error occurred in it. */
-        assert(!(ival == -1 && PyErr_Occurred()));
-
+        if (!overflow && ival == -1 && PyErr_Occurred())
+            goto onError;
         if (overflow || !(0 <= ival && ival <= 255)) {
             PyErr_SetString(PyExc_OverflowError,
                             "%c arg not in range(256)");
@@ -530,6 +522,10 @@ byte_converter(PyObject *arg, char *p)
         *p = (char)ival;
         return 1;
     }
+  onError:
+    PyErr_SetString(PyExc_TypeError,
+        "%c requires an integer in range(256) or a single byte");
+    return 0;
 }
 
 static PyObject *

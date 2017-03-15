@@ -480,13 +480,16 @@ PyLong_AsLong(PyObject *obj)
 {
     int overflow;
     long result = PyLong_AsLongAndOverflow(obj, &overflow);
-    if (overflow == 1) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "Python int too large to convert to C long");
-    }
-    else if (overflow == -1) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "Python int too small to convert to C long");
+    if (overflow) {
+        if (overflow == 1) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Python int too large to convert to C long");
+        }
+        else {
+            assert(overflow == -1);
+            PyErr_SetString(PyExc_OverflowError,
+                            "Python int too small to convert to C long");
+        }
     }
     return result;
 }
@@ -499,14 +502,16 @@ _PyLong_AsInt(PyObject *obj)
 {
     int overflow;
     long result = PyLong_AsLongAndOverflow(obj, &overflow);
-    if (overflow == 1 || result > INT_MAX) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "Python int too large to convert to C int");
-        return -1;
-    }
-    else if (overflow == -1 || result < INT_MIN) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "Python int too small to convert to C int");
+    if (overflow || result > INT_MAX || result < INT_MIN) {
+        if (overflow == 1 || result > INT_MAX) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Python int too large to convert to C int");
+        }
+        else {
+            assert(overflow == -1 || result < INT_MIN);
+            PyErr_SetString(PyExc_OverflowError,
+                            "Python int too small to convert to C int");
+        }
         return -1;
     }
     return (int)result;
