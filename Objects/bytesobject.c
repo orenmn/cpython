@@ -2593,11 +2593,8 @@ bytes_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if (PyIndex_Check(x)) {
         size = PyNumber_AsSsize_t(x, PyExc_OverflowError);
         if (size == -1 && PyErr_Occurred()) {
-            if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
-                PyErr_SetString(PyExc_OverflowError,
-                                "count does not fit in C Py_ssize_t");
+            if (PyErr_ExceptionMatches(PyExc_OverflowError))
                 return NULL;
-            }
             PyErr_Clear();  /* fall through */
         }
         else {

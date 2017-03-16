@@ -1092,19 +1092,19 @@ new_mmap_object(PyTypeObject *type, PyObject *args, PyObject *kwdict)
                                "access", "offset", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwdict,
-                                     "in|iii" _Py_PARSE_OFF_T ":mmap.__new__",
+                                     "in|iii" _Py_PARSE_OFF_T ":mmap",
                                      keywords, &fd, &map_size, &flags, &prot,
                                      &access, &offset)) {
         return NULL;
     }
     if (map_size < 0) {
         PyErr_SetString(PyExc_OverflowError,
-                        "memory mapped length must be positive");
+                        "memory mapped length must be non-negative");
         return NULL;
     }
     if (offset < 0) {
         PyErr_SetString(PyExc_OverflowError,
-                        "memory mapped offset must be positive");
+                        "memory mapped offset must be non-negative");
         return NULL;
     }
 
@@ -1253,7 +1253,7 @@ new_mmap_object(PyTypeObject *type, PyObject *args, PyObject *kwdict)
                                 "tagname",
                                 "access", "offset", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "in|ziL:mmap.__new__",
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "in|ziL:mmap",
                                      keywords, &fileno, &map_size,
                                      &tagname, &access, &offset)) {
         return NULL;
@@ -1279,12 +1279,12 @@ new_mmap_object(PyTypeObject *type, PyObject *args, PyObject *kwdict)
 
     if (map_size < 0) {
         PyErr_SetString(PyExc_OverflowError,
-                        "memory mapped length must be positive");
+                        "memory mapped length must be non-negative");
         return NULL;
     }
     if (offset < 0) {
         PyErr_SetString(PyExc_OverflowError,
-                        "memory mapped offset must be positive");
+                        "memory mapped offset must be non-negative");
         return NULL;
     }
 

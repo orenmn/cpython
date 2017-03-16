@@ -5476,6 +5476,12 @@ socket_ntohs(PyObject *self, PyObject *args)
     int x;
 
     if (!PyArg_ParseTuple(args, "i:ntohs", &x)) {
+        assert(PyErr_Occurred());
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "ntohs: Python int does not fit in C 16-bit "
+                            "unsigned integer");
+        }
         return NULL;
     }
     if (x < 0) {
@@ -5528,8 +5534,8 @@ socket_ntohl(PyObject *self, PyObject *arg)
             y = x & 0xFFFFFFFFUL;
             if (y ^ x)
                 return PyErr_Format(PyExc_OverflowError,
-                                    "ntohl: Python int too large to convert "
-                                    "to C 32-bit unsigned integer");
+                                    "ntohl: Python int does not fit in "
+                                    "C 32-bit unsigned integer");
             x = y;
         }
 #endif
@@ -5553,6 +5559,12 @@ socket_htons(PyObject *self, PyObject *args)
     int x;
 
     if (!PyArg_ParseTuple(args, "i:htons", &x)) {
+        assert(PyErr_Occurred());
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "htons: Python int does not fit in C 16-bit "
+                            "unsigned integer");
+        }
         return NULL;
     }
     if (x < 0) {
@@ -5605,8 +5617,8 @@ socket_htonl(PyObject *self, PyObject *arg)
             y = x & 0xFFFFFFFFUL;
             if (y ^ x)
                 return PyErr_Format(PyExc_OverflowError,
-                                    "htonl: Python int too large to convert "
-                                    "to C 32-bit unsigned integer");
+                                    "htonl: Python int does not fit in "
+                                    "C 32-bit unsigned integer");
             x = y;
         }
 #endif
@@ -6094,13 +6106,12 @@ socket_getnameinfo(PyObject *self, PyObject *args)
                         "getnameinfo() argument 1 must be a tuple");
         return NULL;
     }
-    if (!PyArg_ParseTuple(sa, "si|II:getnameinfo",
-                          &hostp, &port, &flowinfo, &scope_id)) {
+    if (!PyArg_ParseTuple(sa, "si|II",
+                          &hostp, &port, &flowinfo, &scope_id))
         return NULL;
-    }
     if (flowinfo > 0xfffff) {
         PyErr_SetString(PyExc_OverflowError,
-                        "getnameinfo: flowinfo must be 0-1048575.");
+                        "getsockaddrarg: flowinfo must be 0-1048575.");
         return NULL;
     }
     PyOS_snprintf(pbuf, sizeof(pbuf), "%d", port);

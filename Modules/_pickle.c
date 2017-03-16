@@ -1881,7 +1881,7 @@ save_long(PicklerObject *self, PyObject *obj)
         if (nbits == (size_t)-1 && PyErr_Occurred()) {
             assert(PyErr_ExceptionMatches(PyExc_OverflowError));
             PyErr_SetString(PyExc_OverflowError,
-                            "Python int too large to pickle");
+                            "int too large to pickle");
             goto error;
         }
         /* How many bytes do we need?  There are nbits >> 3 full
@@ -1901,7 +1901,7 @@ save_long(PicklerObject *self, PyObject *obj)
         nbytes = (nbits >> 3) + 1;
         if (nbytes > 0x7fffffffL) {
             PyErr_SetString(PyExc_OverflowError,
-                            "Python int too large to pickle");
+                            "int too large to pickle");
             goto error;
         }
         repr = PyBytes_FromStringAndSize(NULL, (Py_ssize_t)nbytes);

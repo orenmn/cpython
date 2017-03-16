@@ -2603,7 +2603,7 @@ PyCurses_KeyName(PyObject *self, PyObject *args)
     }
 
     if (ch < 0) {
-        PyErr_SetString(PyExc_ValueError, "key number must be nonnegative");
+        PyErr_SetString(PyExc_ValueError, "key number must be non-negative");
         return NULL;
     }
     knp = keyname(ch);

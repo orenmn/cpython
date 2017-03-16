@@ -415,7 +415,7 @@ When 'seconds' is not passed in, convert the current time instead.");
  * an exception and return 0 on error.
  */
 static int
-gettmarg(PyObject *args, struct tm *p)
+gettmarg(PyObject *args, struct tm *p, const char *format)
 {
     int y;
 
@@ -427,7 +427,7 @@ gettmarg(PyObject *args, struct tm *p)
         return 0;
     }
 
-    if (!PyArg_ParseTuple(args, "iiiiiiiii:mktime/asctime/strftime",
+    if (!PyArg_ParseTuple(args, format,
                           &y, &p->tm_mon, &p->tm_mday,
                           &p->tm_hour, &p->tm_min, &p->tm_sec,
                           &p->tm_wday, &p->tm_yday, &p->tm_isdst)) {
@@ -587,7 +587,7 @@ time_strftime(PyObject *self, PyObject *args)
         if (_PyTime_localtime(tt, &buf) != 0)
             return NULL;
     }
-    else if (!gettmarg(tup, &buf) || !checktm(&buf))
+    else if (!gettmarg(tup, &buf, "iiiiiiiii:strftime") || !checktm(&buf))
         return NULL;
 
 #if defined(_MSC_VER) || defined(sun) || defined(_AIX)
@@ -778,7 +778,7 @@ time_asctime(PyObject *self, PyObject *args)
         if (_PyTime_localtime(tt, &buf) != 0)
             return NULL;
 
-    } else if (!gettmarg(tup, &buf) || !checktm(&buf))
+    } else if (!gettmarg(tup, &buf, "iiiiiiiii:asctime") || !checktm(&buf))
         return NULL;
     return _asctime(&buf);
 }
@@ -815,7 +815,7 @@ time_mktime(PyObject *self, PyObject *tup)
 {
     struct tm buf;
     time_t tt;
-    if (!gettmarg(tup, &buf))
+    if (!gettmarg(tup, &buf, "iiiiiiiii:mktime"))
         return NULL;
 #ifdef _AIX
     /* year < 1902 or year > 2037 */
@@ -823,7 +823,7 @@ time_mktime(PyObject *self, PyObject *tup)
         /* Issue #19748: On AIX, mktime() doesn't report overflow error for
          * timestamp < -2^31 or timestamp > 2**31-1. */
         PyErr_SetString(PyExc_OverflowError,
-                        "mktime argument out of range");
+                        "mktime() argument out of range");
         return NULL;
     }
 #else
@@ -843,7 +843,7 @@ time_mktime(PyObject *self, PyObject *tup)
        )
     {
         PyErr_SetString(PyExc_OverflowError,
-                        "mktime argument out of range");
+                        "mktime() argument out of range");
         return NULL;
     }
     return PyFloat_FromDouble((double)tt);

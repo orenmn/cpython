@@ -2181,7 +2181,7 @@ delta_new(PyTypeObject *type, PyObject *args, PyObject *kw)
         "minutes", "hours", "weeks", NULL
     };
 
-    if (PyArg_ParseTupleAndKeywords(args, kw, "|OOOOOOO:timedelta.__new__",
+    if (PyArg_ParseTupleAndKeywords(args, kw, "|OOOOOOO:__new__",
                                     keywords,
                                     &day, &second, &us,
                                     &ms, &minute, &hour, &week) == 0)
@@ -2528,7 +2528,7 @@ date_new(PyTypeObject *type, PyObject *args, PyObject *kw)
         return (PyObject *)me;
     }
 
-    if (PyArg_ParseTupleAndKeywords(args, kw, "iii:date.__new__", date_kws,
+    if (PyArg_ParseTupleAndKeywords(args, kw, "iii:date", date_kws,
                                     &year, &month, &day)) {
         self = new_date_ex(year, month, day, type);
     }
@@ -3612,7 +3612,7 @@ time_new(PyTypeObject *type, PyObject *args, PyObject *kw)
         return (PyObject *)me;
     }
 
-    if (PyArg_ParseTupleAndKeywords(args, kw, "|iiiiO$i:time.__new__",
+    if (PyArg_ParseTupleAndKeywords(args, kw, "|iiiiO$i:time",
                                     time_kws,
                                     &hour, &minute, &second, &usecond,
                                     &tzinfo, &fold)) {
@@ -4199,7 +4199,7 @@ datetime_new(PyTypeObject *type, PyObject *args, PyObject *kw)
         return (PyObject *)me;
     }
 
-    if (PyArg_ParseTupleAndKeywords(args, kw, "iii|iiiiO$i:datetime.__new__",
+    if (PyArg_ParseTupleAndKeywords(args, kw, "iii|iiiiO$i:datetime",
                                     datetime_kws,
                                     &year, &month, &day, &hour, &minute,
                                     &second, &usecond, &tzinfo, &fold)) {

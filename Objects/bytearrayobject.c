@@ -798,11 +798,8 @@ bytearray_init(PyByteArrayObject *self, PyObject *args, PyObject *kwds)
     if (PyIndex_Check(arg)) {
         count = PyNumber_AsSsize_t(arg, PyExc_OverflowError);
         if (count == -1 && PyErr_Occurred()) {
-            if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
-                PyErr_SetString(PyExc_OverflowError,
-                                "count does not fit in C Py_ssize_t");
+            if (PyErr_ExceptionMatches(PyExc_OverflowError))
                 return -1;
-            }
             PyErr_Clear();  /* fall through */
         }
         else {
