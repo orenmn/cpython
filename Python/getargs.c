@@ -699,16 +699,18 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         ival = PyLong_AsLongAndOverflow(arg, &overflow);
         if (ival == -1 && PyErr_Occurred())
             RETURN_ERR_OCCURRED;
-        else if (overflow > 0 || ival > UCHAR_MAX) {
-            PyErr_SetString(PyExc_OverflowError,
-                            "Python int too large to convert to C unsigned "
-                            "char");
-            RETURN_ERR_OCCURRED;
-        }
-        else if (overflow < 0 || ival < 0) {
-            PyErr_SetString(PyExc_OverflowError,
-                            "can't convert negative Python int to C unsigned "
-                            "char");
+        else if (overflow || ival > UCHAR_MAX || ival < 0) {
+            if (overflow > 0 || ival > UCHAR_MAX) {
+                PyErr_SetString(PyExc_OverflowError,
+                                "Python int too large to convert to C "
+                                "unsigned char");
+            }
+            else {
+                assert(overflow < 0 || ival < 0);
+                PyErr_SetString(PyExc_OverflowError,
+                                "can't convert negative Python int to C "
+                                "unsigned char");
+            }
             RETURN_ERR_OCCURRED;
         }
         else
@@ -738,14 +740,16 @@ convertsimple(PyObject *arg, const char **p_format, va_list *p_va, int flags,
         ival = PyLong_AsLongAndOverflow(arg, &overflow);
         if (ival == -1 && PyErr_Occurred())
             RETURN_ERR_OCCURRED;
-        else if (overflow > 0 || ival > SHRT_MAX) {
-            PyErr_SetString(PyExc_OverflowError,
-                            "Python int too large to convert to C short");
-            RETURN_ERR_OCCURRED;
-        }
-        else if (overflow < 0 || ival < SHRT_MIN) {
-            PyErr_SetString(PyExc_OverflowError,
-                            "Python int too small to convert to C short");
+        else if (overflow || ival > SHRT_MAX || ival < SHRT_MIN) {
+            if (overflow > 0 || ival > SHRT_MAX) {
+                PyErr_SetString(PyExc_OverflowError,
+                                "Python int too large to convert to C short");
+            }
+            else {
+                assert(overflow < 0 || ival < SHRT_MIN);
+                PyErr_SetString(PyExc_OverflowError,
+                                "Python int too small to convert to C short");
+            }
             RETURN_ERR_OCCURRED;
         }
         else
