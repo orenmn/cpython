@@ -226,8 +226,6 @@ class TestFilemodeCStat(TestFilemode, unittest.TestCase):
 
     @cpython_only
     def test_mode_t_converter(self):
-        from _testcapi import USHRT_MAX
-
         # test _PyLong_AsMode_t by testing S_IMODE, which uses
         # _PyLong_AsMode_t to convert the argument it receives.
         self.assertRaises(TypeError, c_stat.S_IMODE, 1.0)
@@ -238,10 +236,13 @@ class TestFilemodeCStat(TestFilemode, unittest.TestCase):
         c_stat.S_IMODE(0)
         self.assertRaises(OverflowError, c_stat.S_IMODE, 1 << 1000)
 
-        # test platform specific mode_t upper limit
-        if sys.platform == 'win32':
-            c_stat.S_IMODE(USHRT_MAX) # verify OverflowError is not raised
-            self.assertRaises(OverflowError, c_stat.S_IMODE, USHRT_MAX + 1)
+    @cpython_only
+    @unittest.skipUnless(sys.platform == "win32", 'Windows-specific test')
+    def test_mode_t_converter_windows(self):
+        from _testcapi import USHRT_MAX
+
+        c_stat.S_IMODE(USHRT_MAX) # verify OverflowError is not raised
+        self.assertRaises(OverflowError, c_stat.S_IMODE, USHRT_MAX + 1)
 
 
 class TestFilemodePyStat(TestFilemode, unittest.TestCase):

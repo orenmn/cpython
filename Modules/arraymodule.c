@@ -197,8 +197,13 @@ b_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     /* PyArg_Parse's 'b' formatter is for an unsigned char, therefore
        must use the next size up that is signed ('h') and manually do
        the overflow checking */
-    if (!PyArg_Parse(v, "h;array item must be integer", &x))
+    if (!PyArg_Parse(v, "h;array item must be integer", &x)) {
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Python int does not fit in C char");
+        }
         return -1;
+    }
     else if (x < -128) {
         PyErr_SetString(PyExc_OverflowError,
                         "Python int too small to convert to C char");
@@ -289,8 +294,13 @@ HH_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     int x;
     /* PyArg_Parse's 'h' formatter is for a signed short, therefore
        must use the next size up and manually do the overflow checking */
-    if (!PyArg_Parse(v, "i;array item must be integer", &x))
+    if (!PyArg_Parse(v, "i;array item must be integer", &x)) {
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Python int does not fit in C unsigned short");
+        }
         return -1;
+    }
     else if (x < 0) {
         PyErr_SetString(PyExc_OverflowError,
                         "array item can't be negative");

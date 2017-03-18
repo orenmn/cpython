@@ -581,10 +581,6 @@ _io_BytesIO_truncate_impl(bytesio *self, PyObject *arg)
     else if (PyIndex_Check(arg)) {
         size = PyNumber_AsSsize_t(arg, PyExc_OverflowError);
         if (size == -1 && PyErr_Occurred()) {
-            if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
-                PyErr_SetString(PyExc_OverflowError,
-                                "size value does not fit in C Py_ssize_t");
-            }
             return NULL;
         }
     }

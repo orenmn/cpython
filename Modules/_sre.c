@@ -1413,14 +1413,13 @@ _sre_compile_impl(PyObject *module, PyObject *pattern, int flags,
         unsigned long value = PyLong_AsUnsignedLong(o);
         self->code[i] = (SRE_CODE) value;
         if ((unsigned long) self->code[i] != value) {
-            PyErr_SetString(PyExc_OverflowError,
-                            "regular expression code out of range");
-            break;
+            goto error;
         }
     }
 
     if (PyErr_Occurred()) {
         if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+error:
             PyErr_SetString(PyExc_OverflowError,
                             "regular expression code out of range");
         }

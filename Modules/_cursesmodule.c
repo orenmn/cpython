@@ -1221,9 +1221,8 @@ PyCursesWindow_GetStr(PyCursesWindowObject *self, PyObject *args)
         Py_END_ALLOW_THREADS
         break;
     case 1:
-        if (!PyArg_ParseTuple(args, "i:getstr", &n)) {
+        if (!PyArg_ParseTuple(args,"i;n", &n))
             return NULL;
-        }
         if (n < 0) {
             PyErr_SetString(PyExc_ValueError, "'n' must be nonnegative");
             return NULL;
@@ -1233,9 +1232,8 @@ PyCursesWindow_GetStr(PyCursesWindowObject *self, PyObject *args)
         Py_END_ALLOW_THREADS
         break;
     case 2:
-        if (!PyArg_ParseTuple(args, "ii:getstr", &y, &x)) {
+        if (!PyArg_ParseTuple(args,"ii;y,x",&y,&x))
             return NULL;
-        }
         Py_BEGIN_ALLOW_THREADS
 #ifdef STRICT_SYSV_CURSES
         rtn2 = wmove(self->win,y,x)==ERR ? ERR : wgetnstr(self->win, rtn, 1023);
@@ -1245,9 +1243,8 @@ PyCursesWindow_GetStr(PyCursesWindowObject *self, PyObject *args)
         Py_END_ALLOW_THREADS
         break;
     case 3:
-        if (!PyArg_ParseTuple(args, "iii:getstr", &y, &x, &n)) {
+        if (!PyArg_ParseTuple(args,"iii;y,x,n", &y, &x, &n))
             return NULL;
-        }
         if (n < 0) {
             PyErr_SetString(PyExc_ValueError, "'n' must be nonnegative");
             return NULL;
@@ -1396,9 +1393,8 @@ PyCursesWindow_InStr(PyCursesWindowObject *self, PyObject *args)
         rtn2 = winnstr(self->win,rtn, 1023);
         break;
     case 1:
-        if (!PyArg_ParseTuple(args, "i:instr", &n)) {
+        if (!PyArg_ParseTuple(args,"i;n", &n))
             return NULL;
-        }
         if (n < 0) {
             PyErr_SetString(PyExc_ValueError, "'n' must be nonnegative");
             return NULL;
@@ -1406,15 +1402,13 @@ PyCursesWindow_InStr(PyCursesWindowObject *self, PyObject *args)
         rtn2 = winnstr(self->win, rtn, Py_MIN(n, 1023));
         break;
     case 2:
-        if (!PyArg_ParseTuple(args, "ii:instr", &y, &x)) {
+        if (!PyArg_ParseTuple(args,"ii;y,x",&y,&x))
             return NULL;
-        }
         rtn2 = mvwinnstr(self->win,y,x,rtn,1023);
         break;
     case 3:
-        if (!PyArg_ParseTuple(args, "iii:instr", &y, &x, &n)) {
+        if (!PyArg_ParseTuple(args, "iii;y,x,n", &y, &x, &n))
             return NULL;
-        }
         if (n < 0) {
             PyErr_SetString(PyExc_ValueError, "'n' must be nonnegative");
             return NULL;
@@ -2598,9 +2592,7 @@ PyCurses_KeyName(PyObject *self, PyObject *args)
 
     PyCursesInitialised;
 
-    if (!PyArg_ParseTuple(args, "i:keyname" ,&ch)) {
-        return NULL;
-    }
+    if (!PyArg_ParseTuple(args,"i",&ch)) return NULL;
 
     if (ch < 0) {
         PyErr_SetString(PyExc_ValueError, "key number must be non-negative");

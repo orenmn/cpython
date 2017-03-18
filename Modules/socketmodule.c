@@ -1782,10 +1782,10 @@ getsockaddrarg(PySocketSockObject *s, PyObject *args,
                 Py_TYPE(args)->tp_name);
             return 0;
         }
-        if (!PyArg_ParseTuple(args, "si|iiy*:getsockaddrarg", &interfaceName,
-                              &protoNumber, &pkttype, &hatype, &haddr)) {
+        if (!PyArg_ParseTuple(args, "si|iiy*", &interfaceName,
+                              &protoNumber, &pkttype, &hatype,
+                              &haddr))
             return 0;
-        }
         strncpy(ifr.ifr_name, interfaceName, sizeof(ifr.ifr_name));
         ifr.ifr_name[(sizeof(ifr.ifr_name))-1] = '\0';
         if (ioctl(s->sock_fd, SIOCGIFINDEX, &ifr) < 0) {
