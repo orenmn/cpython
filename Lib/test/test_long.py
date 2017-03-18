@@ -712,6 +712,14 @@ class LongTest(unittest.TestCase):
                 self.assertEqual(format(value, format_spec),
                                  format(float(value), format_spec))
 
+        # test 'c' specifier limits
+        self.assertRaises(OverflowError, format, -1 << 1000, 'c')
+        self.assertRaises(OverflowError, format, -1, 'c')
+        self.assertEqual(format(0, 'c'), '\x00')
+        self.assertEqual(format(0x10ffff, 'c'), '\U0010ffff')
+        self.assertRaises(OverflowError, format, 0x110000, 'c')
+        self.assertRaises(OverflowError, format, 1 << 1000, 'c')
+
     def test_nan_inf(self):
         self.assertRaises(OverflowError, int, float('inf'))
         self.assertRaises(OverflowError, int, float('-inf'))

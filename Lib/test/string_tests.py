@@ -1237,6 +1237,14 @@ class MixinStrUnicodeUserStringTest:
                          (PY_SSIZE_T_MAX + 1, ''))
         self.checkraises(OverflowError, '%.*f', '__mod__',
                          (INT_MAX + 1, 1. / 7))
+
+        self.checkraises(OverflowError, '%c', '__mod__', -1 << 1000)
+        self.checkraises(OverflowError, '%c', '__mod__', -1)
+        self.checkequal('c=\x00', 'c=%c', '__mod__', 0)
+        self.checkequal('c=\U0010ffff', 'c=%c', '__mod__', 0x10ffff)
+        self.checkraises(OverflowError, '%c', '__mod__', 0x110000)
+        self.checkraises(OverflowError, '%c', '__mod__', 1 << 1000)
+
         # Issue 15989
         self.checkraises(OverflowError, '%*s', '__mod__',
                          (SIZE_MAX + 1, ''))
