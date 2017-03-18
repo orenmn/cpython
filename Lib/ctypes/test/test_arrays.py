@@ -1,5 +1,4 @@
 import unittest
-import test.support
 from ctypes import *
 
 from ctypes.test import need_symbol
@@ -181,29 +180,6 @@ class ArrayTestCase(unittest.TestCase):
             class T(Array):
                 _type_ = c_int
                 _length_ = 1.87
-
-    def test_bad_length(self):
-        from _testcapi import LONG_MAX
-
-        with self.assertRaises(ValueError):
-            class T(Array):
-                _type_ = c_int
-                _length_ = -1 << 1000
-        with self.assertRaises(ValueError):
-            class T(Array):
-                _type_ = c_int
-                _length_ = -1
-        class T(Array):
-            _type_ = c_int
-            _length_ = 0
-        with self.assertRaises(OverflowError):
-            class T(Array):
-                _type_ = c_int
-                _length_ = LONG_MAX + 1
-        with self.assertRaises(OverflowError):
-            class T(Array):
-                _type_ = c_int
-                _length_ = 1 << 1000
 
 if __name__ == '__main__':
     unittest.main()
