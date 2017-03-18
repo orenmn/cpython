@@ -197,16 +197,21 @@ b_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     /* PyArg_Parse's 'b' formatter is for an unsigned char, therefore
        must use the next size up that is signed ('h') and manually do
        the overflow checking */
-    if (!PyArg_Parse(v, "h;array item must be integer", &x))
+    if (!PyArg_Parse(v, "h;array item must be integer", &x)) {
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Python int does not fit in C char");
+        }
         return -1;
+    }
     else if (x < -128) {
         PyErr_SetString(PyExc_OverflowError,
-            "signed char is less than minimum");
+                        "Python int too small to convert to C char");
         return -1;
     }
     else if (x > 127) {
         PyErr_SetString(PyExc_OverflowError,
-            "signed char is greater than maximum");
+                        "Python int too large to convert to C char");
         return -1;
     }
     if (i >= 0)
@@ -273,7 +278,7 @@ h_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     if (!PyArg_Parse(v, "h;array item must be integer", &x))
         return -1;
     if (i >= 0)
-                 ((short *)ap->ob_item)[i] = x;
+        ((short *)ap->ob_item)[i] = x;
     return 0;
 }
 
@@ -289,16 +294,21 @@ HH_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     int x;
     /* PyArg_Parse's 'h' formatter is for a signed short, therefore
        must use the next size up and manually do the overflow checking */
-    if (!PyArg_Parse(v, "i;array item must be integer", &x))
+    if (!PyArg_Parse(v, "i;array item must be integer", &x)) {
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Python int does not fit in C unsigned short");
+        }
         return -1;
+    }
     else if (x < 0) {
         PyErr_SetString(PyExc_OverflowError,
-            "unsigned short is less than minimum");
+                        "array item can't be negative");
         return -1;
     }
     else if (x > USHRT_MAX) {
         PyErr_SetString(PyExc_OverflowError,
-            "unsigned short is greater than maximum");
+                        "Python int too large to convert to C unsigned short");
         return -1;
     }
     if (i >= 0)
@@ -320,7 +330,7 @@ i_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     if (!PyArg_Parse(v, "i;array item must be integer", &x))
         return -1;
     if (i >= 0)
-                 ((int *)ap->ob_item)[i] = x;
+        ((int *)ap->ob_item)[i] = x;
     return 0;
 }
 
@@ -357,6 +367,9 @@ II_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     }
     x = PyLong_AsUnsignedLong(v);
     if (x == (unsigned long)-1 && PyErr_Occurred()) {
+        assert(PyErr_ExceptionMatches(PyExc_OverflowError));
+        PyErr_SetString(PyExc_OverflowError,
+                        "Python int does not fit in C unsigned int");
         if (do_decref) {
             Py_DECREF(v);
         }
@@ -364,7 +377,7 @@ II_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     }
     if (x > UINT_MAX) {
         PyErr_SetString(PyExc_OverflowError,
-                        "unsigned int is greater than maximum");
+                        "Python int too large to convert to C unsigned int");
         if (do_decref) {
             Py_DECREF(v);
         }
@@ -392,7 +405,7 @@ l_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     if (!PyArg_Parse(v, "l;array item must be integer", &x))
         return -1;
     if (i >= 0)
-                 ((long *)ap->ob_item)[i] = x;
+        ((long *)ap->ob_item)[i] = x;
     return 0;
 }
 
@@ -417,6 +430,9 @@ LL_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     }
     x = PyLong_AsUnsignedLong(v);
     if (x == (unsigned long)-1 && PyErr_Occurred()) {
+        assert(PyErr_ExceptionMatches(PyExc_OverflowError));
+        PyErr_SetString(PyExc_OverflowError,
+                        "Python int does not fit in C unsigned long");
         if (do_decref) {
             Py_DECREF(v);
         }
@@ -470,6 +486,9 @@ QQ_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     }
     x = PyLong_AsUnsignedLongLong(v);
     if (x == (unsigned long long)-1 && PyErr_Occurred()) {
+        assert(PyErr_ExceptionMatches(PyExc_OverflowError));
+        PyErr_SetString(PyExc_OverflowError,
+                        "Python int does not fit in C unsigned long long");
         if (do_decref) {
             Py_DECREF(v);
         }
