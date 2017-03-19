@@ -5476,6 +5476,12 @@ socket_ntohs(PyObject *self, PyObject *args)
     int x;
 
     if (!PyArg_ParseTuple(args, "i:ntohs", &x)) {
+        assert(PyErr_Occurred());
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "ntohs: Python int does not fit in C 16-bit "
+                            "unsigned integer");
+        }
         return NULL;
     }
     if (x < 0) {
@@ -5514,8 +5520,13 @@ socket_ntohl(PyObject *self, PyObject *arg)
 
     if (PyLong_Check(arg)) {
         x = PyLong_AsUnsignedLong(arg);
-        if (x == (unsigned long) -1 && PyErr_Occurred())
+        if (x == (unsigned long) -1 && PyErr_Occurred()) {
+            assert(PyErr_ExceptionMatches(PyExc_OverflowError));
+            PyErr_SetString(PyExc_OverflowError,
+                            "ntohl: Python int does not fit in C 32-bit "
+                            "unsigned integer");
             return NULL;
+        }
 #if SIZEOF_LONG > 4
         {
             unsigned long y;
@@ -5523,7 +5534,8 @@ socket_ntohl(PyObject *self, PyObject *arg)
             y = x & 0xFFFFFFFFUL;
             if (y ^ x)
                 return PyErr_Format(PyExc_OverflowError,
-                            "int larger than 32 bits");
+                                    "ntohl: Python int does not fit in "
+                                    "C 32-bit unsigned integer");
             x = y;
         }
 #endif
@@ -5547,6 +5559,12 @@ socket_htons(PyObject *self, PyObject *args)
     int x;
 
     if (!PyArg_ParseTuple(args, "i:htons", &x)) {
+        assert(PyErr_Occurred());
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "htons: Python int does not fit in C 16-bit "
+                            "unsigned integer");
+        }
         return NULL;
     }
     if (x < 0) {
@@ -5585,8 +5603,13 @@ socket_htonl(PyObject *self, PyObject *arg)
 
     if (PyLong_Check(arg)) {
         x = PyLong_AsUnsignedLong(arg);
-        if (x == (unsigned long) -1 && PyErr_Occurred())
+        if (x == (unsigned long) -1 && PyErr_Occurred()) {
+            assert(PyErr_ExceptionMatches(PyExc_OverflowError));
+            PyErr_SetString(PyExc_OverflowError,
+                            "htonl: Python int does not fit in C 32-bit "
+                            "unsigned integer");
             return NULL;
+        }
 #if SIZEOF_LONG > 4
         {
             unsigned long y;
@@ -5594,7 +5617,8 @@ socket_htonl(PyObject *self, PyObject *arg)
             y = x & 0xFFFFFFFFUL;
             if (y ^ x)
                 return PyErr_Format(PyExc_OverflowError,
-                            "int larger than 32 bits");
+                                    "htonl: Python int does not fit in "
+                                    "C 32-bit unsigned integer");
             x = y;
         }
 #endif
@@ -5603,7 +5627,7 @@ socket_htonl(PyObject *self, PyObject *arg)
         return PyErr_Format(PyExc_TypeError,
                             "expected int, %s found",
                             Py_TYPE(arg)->tp_name);
-    return PyLong_FromUnsignedLong(htonl((unsigned long)x));
+    return PyLong_FromUnsignedLong(htonl(x));
 }
 
 PyDoc_STRVAR(htonl_doc,

@@ -384,7 +384,7 @@ ushort_converter(PyObject *obj, void *ptr)
         return 0;
     if (uval > USHRT_MAX) {
         PyErr_SetString(PyExc_OverflowError,
-                        "Python int too large for C unsigned short");
+                        "Python int too large to convert to C unsigned short");
         return 0;
     }
 

@@ -417,6 +417,30 @@ class MmapTests(unittest.TestCase):
             m[x] = b
             self.assertEqual(m[x], b)
 
+    def test_bad_length(self):
+        self.assertRaises(OverflowError, mmap.mmap, -1, -1 << 1000)
+        self.assertRaises(OverflowError, mmap.mmap, -1, -1)
+
+    @cpython_only
+    def test_constructor_c_limits(self):
+        from _testcapi import INT_MIN, INT_MAX, PY_SSIZE_T_MAX
+
+        # test overflow values of arguments that are stored in the
+        # same C types on Unix and on Windows:
+        # fileno
+        self.assertRaises(OverflowError, mmap.mmap, -1 << 1000, 16)
+        self.assertRaises(OverflowError, mmap.mmap, INT_MIN - 1, 16)
+        self.assertRaises(OverflowError, mmap.mmap, INT_MAX + 1, 16)
+        self.assertRaises(OverflowError, mmap.mmap, 1 << 1000, 16)
+        # length
+        self.assertRaises(OverflowError, mmap.mmap, -1, PY_SSIZE_T_MAX + 1)
+        self.assertRaises(OverflowError, mmap.mmap, -1, 1 << 1000)
+        # access
+        self.assertRaises(OverflowError, mmap.mmap, -1, 16, access=-1 << 1000)
+        self.assertRaises(OverflowError, mmap.mmap, -1, 16, access=INT_MIN - 1)
+        self.assertRaises(OverflowError, mmap.mmap, -1, 16, access=INT_MAX + 1)
+        self.assertRaises(OverflowError, mmap.mmap, -1, 16, access=1 << 1000)
+
     def test_read_all(self):
         m = mmap.mmap(-1, 16)
         self.addCleanup(m.close)
@@ -445,6 +469,19 @@ class MmapTests(unittest.TestCase):
         self.assertRaises(TypeError, m.read, 'foo')
         self.assertRaises(TypeError, m.read, 5.5)
         self.assertRaises(TypeError, m.read, [1, 2, 3])
+
+    @cpython_only
+    def test_read_c_limits(self):
+        from _testcapi import PY_SSIZE_T_MAX, PY_SSIZE_T_MIN
+        m = mmap.mmap(-1, 16)
+        self.addCleanup(m.close)
+
+        self.assertRaises(OverflowError, m.read, -1 << 1000)
+        self.assertRaises(OverflowError, m.read, PY_SSIZE_T_MIN - 1)
+        m.read(PY_SSIZE_T_MIN)
+        m.read(PY_SSIZE_T_MAX)
+        self.assertRaises(OverflowError, m.read, PY_SSIZE_T_MAX + 1)
+        self.assertRaises(OverflowError, m.read, 1 << 1000)
 
     def test_extended_getslice(self):
         # Test extended slicing by comparing with list slicing.
