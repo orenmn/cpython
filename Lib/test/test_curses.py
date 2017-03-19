@@ -191,8 +191,12 @@ class TestCurses(unittest.TestCase):
 
         self.assertRaises(ValueError, stdscr.getstr, -400)
         self.assertRaises(ValueError, stdscr.getstr, 2, 3, -400)
-        self.assertRaises(ValueError, stdscr.instr, -2)
-        self.assertRaises(ValueError, stdscr.instr, 2, 3, -2)
+        self.assertRaises(ValueError, stdscr.getstr, -1)
+        self.assertRaises(ValueError, stdscr.getstr, 2, 3, -1)
+        self.assertRaises(ValueError, stdscr.instr, -400)
+        self.assertRaises(ValueError, stdscr.instr, 2, 3, -400)
+        self.assertRaises(ValueError, stdscr.instr, -1)
+        self.assertRaises(ValueError, stdscr.instr, 2, 3, -1)
 
 
     def test_module_funcs(self):
@@ -257,6 +261,9 @@ class TestCurses(unittest.TestCase):
 
     @requires_curses_func('keyname')
     def test_keyname(self):
+        self.assertRaises(ValueError, curses.keyname, -400)
+        self.assertRaises(ValueError, curses.keyname, -1)
+        curses.keyname(0)
         curses.keyname(13)
 
     @requires_curses_func('has_key')

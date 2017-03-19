@@ -1,7 +1,8 @@
 import unittest
 import os
 import sys
-from test.support import TESTFN, import_fresh_module, android_not_root
+from test.support import (TESTFN, import_fresh_module, android_not_root,
+                          cpython_only)
 
 c_stat = import_fresh_module('stat', fresh=['_stat'])
 py_stat = import_fresh_module('stat', blocked=['_stat'])
@@ -222,6 +223,26 @@ class TestFilemodeCStat(TestFilemode, unittest.TestCase):
     formats = TestFilemode.formats | {'S_IFDOOR', 'S_IFPORT', 'S_IFWHT'}
     format_funcs = TestFilemode.format_funcs | {'S_ISDOOR', 'S_ISPORT',
                                                 'S_ISWHT'}
+
+    @cpython_only
+    def test_mode_t_converter(self):
+        # test _PyLong_AsMode_t by testing S_IMODE, which uses
+        # _PyLong_AsMode_t to convert the argument it receives.
+        self.assertRaises(TypeError, c_stat.S_IMODE, 1.0)
+        self.assertRaises(TypeError, c_stat.S_IMODE, '1')
+
+        self.assertRaises(OverflowError, c_stat.S_IMODE, -1 << 1000)
+        self.assertRaises(OverflowError, c_stat.S_IMODE, -1)
+        c_stat.S_IMODE(0)
+        self.assertRaises(OverflowError, c_stat.S_IMODE, 1 << 1000)
+
+    @cpython_only
+    @unittest.skipUnless(sys.platform == "win32", 'Windows-specific test')
+    def test_mode_t_converter_windows(self):
+        from _testcapi import USHRT_MAX
+
+        c_stat.S_IMODE(USHRT_MAX) # verify OverflowError is not raised
+        self.assertRaises(OverflowError, c_stat.S_IMODE, USHRT_MAX + 1)
 
 
 class TestFilemodePyStat(TestFilemode, unittest.TestCase):

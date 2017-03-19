@@ -1140,6 +1140,24 @@ class MixinStrUnicodeUserStringTest:
         # but either raises a MemoryError, or succeeds (if you have 54TiB)
         #self.checkraises(OverflowError, 10000*'abc', '__mul__', 2000000000)
 
+    @support.cpython_only
+    def test_mul_c_limits(self):
+        from _testcapi import PY_SSIZE_T_MAX, PY_SSIZE_T_MIN
+
+        # the following tests also test sequence_repeat in Objects/abstract.c
+        self.checkraises(OverflowError, '', '__mul__', -1 << 1000)
+        self.checkraises(OverflowError, '', '__mul__', PY_SSIZE_T_MIN - 1)
+        self.checkequal('', 'a', '__mul__', PY_SSIZE_T_MIN)
+        self.checkequal('', '', '__mul__', PY_SSIZE_T_MAX)
+        self.checkraises(OverflowError, '', '__mul__', PY_SSIZE_T_MAX + 1)
+        self.checkraises(OverflowError, '', '__mul__', 1 << 1000)
+
+        # result's length can't be bigger than PY_SSIZE_T_MAX
+        self.checkraises(OverflowError,
+                         'ab', '__mul__', PY_SSIZE_T_MAX // 2 + 1)
+        self.checkraises(OverflowError,
+                         'ab' * 0x1000, '__mul__', PY_SSIZE_T_MAX)
+
     def test_join(self):
         # join now works with any sequence type
         # moved here, because the argument order is

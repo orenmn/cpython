@@ -244,6 +244,8 @@ PyCurses_ConvertToChtype(PyCursesWindowObject *win, PyObject *obj, chtype *ch)
     else if (PyLong_CheckExact(obj)) {
         int long_overflow;
         value = PyLong_AsLongAndOverflow(obj, &long_overflow);
+        /* PyLong_Check(obj) is true, so it is guaranteed that
+           no error occurred in PyLong_AsLongAndOverflow. */
         if (long_overflow)
             goto overflow;
     }
@@ -260,7 +262,7 @@ PyCurses_ConvertToChtype(PyCursesWindowObject *win, PyObject *obj, chtype *ch)
 
 overflow:
     PyErr_SetString(PyExc_OverflowError,
-                    "byte doesn't fit in chtype");
+                    "Python object does not fit in C chtype");
     return 0;
 }
 
@@ -309,9 +311,11 @@ PyCurses_ConvertToCchar_t(PyCursesWindowObject *win, PyObject *obj,
     else if (PyLong_CheckExact(obj)) {
         int overflow;
         value = PyLong_AsLongAndOverflow(obj, &overflow);
+        /* PyLong_Check(obj) is true, so it is guaranteed that
+           no error occurred in PyLong_AsLongAndOverflow. */
         if (overflow) {
             PyErr_SetString(PyExc_OverflowError,
-                            "int doesn't fit in long");
+                            "Python int does not fit in C chtype");
             return 0;
         }
     }
@@ -325,7 +329,7 @@ PyCurses_ConvertToCchar_t(PyCursesWindowObject *win, PyObject *obj,
     *ch = (chtype)value;
     if ((long)*ch != value) {
         PyErr_Format(PyExc_OverflowError,
-                     "byte doesn't fit in chtype");
+                     "Python object does not fit in C chtype");
         return 0;
     }
     return 1;
@@ -2591,7 +2595,7 @@ PyCurses_KeyName(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args,"i",&ch)) return NULL;
 
     if (ch < 0) {
-        PyErr_SetString(PyExc_ValueError, "invalid key number");
+        PyErr_SetString(PyExc_ValueError, "key number must be non-negative");
         return NULL;
     }
     knp = keyname(ch);
@@ -3089,15 +3093,17 @@ PyCurses_ConvertToWchar_t(PyObject *obj,
         long value;
         int overflow;
         value = PyLong_AsLongAndOverflow(obj, &overflow);
+        /* PyLong_Check(obj) is true, so it is guaranteed that
+           no error occurred in PyLong_AsLongAndOverflow. */
         if (overflow) {
             PyErr_SetString(PyExc_OverflowError,
-                            "int doesn't fit in long");
+                            "Python int does not fit in C wchar_t");
             return 0;
         }
         *wch = (wchar_t)value;
         if ((long)*wch != value) {
             PyErr_Format(PyExc_OverflowError,
-                         "character doesn't fit in wchar_t");
+                         "Python int does not fit in C wchar_t");
             return 0;
         }
         return 1;
