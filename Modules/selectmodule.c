@@ -380,8 +380,13 @@ ushort_converter(PyObject *obj, void *ptr)
     unsigned long uval;
 
     uval = PyLong_AsUnsignedLong(obj);
-    if (uval == (unsigned long)-1 && PyErr_Occurred())
+    if (uval == (unsigned long)-1 && PyErr_Occurred()) {
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "Python int does not fit in C unsigned short");
+        }
         return 0;
+    }
     if (uval > USHRT_MAX) {
         PyErr_SetString(PyExc_OverflowError,
                         "Python int too large to convert to C unsigned short");
