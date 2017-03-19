@@ -278,7 +278,7 @@ h_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     if (!PyArg_Parse(v, "h;array item must be integer", &x))
         return -1;
     if (i >= 0)
-        ((short *)ap->ob_item)[i] = x;
+                 ((short *)ap->ob_item)[i] = x;
     return 0;
 }
 
@@ -303,7 +303,8 @@ HH_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     }
     else if (x < 0) {
         PyErr_SetString(PyExc_OverflowError,
-                        "array item can't be negative");
+                        "can't convert negative Python int to C "
+                        "unsigned short");
         return -1;
     }
     else if (x > USHRT_MAX) {
@@ -330,7 +331,7 @@ i_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     if (!PyArg_Parse(v, "i;array item must be integer", &x))
         return -1;
     if (i >= 0)
-        ((int *)ap->ob_item)[i] = x;
+                 ((int *)ap->ob_item)[i] = x;
     return 0;
 }
 
@@ -405,7 +406,7 @@ l_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     if (!PyArg_Parse(v, "l;array item must be integer", &x))
         return -1;
     if (i >= 0)
-        ((long *)ap->ob_item)[i] = x;
+                 ((long *)ap->ob_item)[i] = x;
     return 0;
 }
 
@@ -430,9 +431,6 @@ LL_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     }
     x = PyLong_AsUnsignedLong(v);
     if (x == (unsigned long)-1 && PyErr_Occurred()) {
-        assert(PyErr_ExceptionMatches(PyExc_OverflowError));
-        PyErr_SetString(PyExc_OverflowError,
-                        "Python int does not fit in C unsigned long");
         if (do_decref) {
             Py_DECREF(v);
         }
@@ -486,9 +484,6 @@ QQ_setitem(arrayobject *ap, Py_ssize_t i, PyObject *v)
     }
     x = PyLong_AsUnsignedLongLong(v);
     if (x == (unsigned long long)-1 && PyErr_Occurred()) {
-        assert(PyErr_ExceptionMatches(PyExc_OverflowError));
-        PyErr_SetString(PyExc_OverflowError,
-                        "Python int does not fit in C unsigned long long");
         if (do_decref) {
             Py_DECREF(v);
         }
