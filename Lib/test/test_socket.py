@@ -1234,21 +1234,11 @@ class GeneralModuleTests(unittest.TestCase):
     def test_getsockaddrarg(self):
         sock = socket.socket()
         self.addCleanup(sock.close)
-
-        self.assertRaises(OverflowError, sock.bind, (HOST, -1 << 1000))
-        self.assertRaises(OverflowError, sock.bind, (HOST, -1))
-        # verify OverflowError is not raised
-        for in_range_port in [0, 0xffff]:
-            try:
-                sock.bind((HOST, in_range_port))
-            except OSError:
-                pass
-            else:
-                sock = socket.socket()
-                self.addCleanup(sock.close)
-        self.assertRaises(OverflowError, sock.bind, (HOST, 1 << 16))
-        self.assertRaises(OverflowError, sock.bind, (HOST, 1 << 1000))
-
+        port = support.find_unused_port()
+        big_port = port + 65536
+        neg_port = port - 65536
+        self.assertRaises(OverflowError, sock.bind, (HOST, big_port))
+        self.assertRaises(OverflowError, sock.bind, (HOST, neg_port))
         # Since find_unused_port() is inherently subject to race conditions, we
         # call it a couple times if necessary.
         for i in itertools.count():
@@ -1505,12 +1495,6 @@ class GeneralModuleTests(unittest.TestCase):
 
     @unittest.skipUnless(support.IPV6_ENABLED, 'IPv6 required for this test.')
     def test_flowinfo(self):
-        self.assertRaises(OverflowError,
-                          socket.getnameinfo, (support.HOSTv6, 0, -1), 0)
-        socket.getnameinfo((support.HOSTv6, 0, 0), 0)
-        socket.getnameinfo((support.HOSTv6, 0, (1 << 20) - 1), 0)
-        self.assertRaises(OverflowError,
-                          socket.getnameinfo, (support.HOSTv6, 0, 1 << 20), 0)
         self.assertRaises(OverflowError, socket.getnameinfo,
                           (support.HOSTv6, 0, 0xffffffff), 0)
         with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as s:
