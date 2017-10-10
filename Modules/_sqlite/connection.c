@@ -51,7 +51,8 @@ static const char * const begin_statements[] = {
     NULL
 };
 
-static int pysqlite_connection_set_isolation_level(pysqlite_Connection* self, PyObject* isolation_level);
+Py_LOCAL_INLINE(int) _set_isolation_level(pysqlite_Connection* self,
+                                          PyObject* isolation_level);
 static void _pysqlite_drop_unused_cursor_references(pysqlite_Connection* self);
 
 
@@ -137,6 +138,12 @@ int pysqlite_connection_init(pysqlite_Connection* self, PyObject* args, PyObject
     } else {
         Py_INCREF(isolation_level);
     }
+    self->isolation_level = NULL;
+    if (_set_isolation_level(self, isolation_level) < 0) {
+        Py_DECREF(isolation_level);
+        return -1;
+    }
+    Py_DECREF(isolation_level);
 
     self->statement_cache = (pysqlite_Cache*)PyObject_CallFunction((PyObject*)&pysqlite_CacheType, "Oi", self, cached_statements);
     if (PyErr_Occurred()) {
@@ -193,14 +200,6 @@ int pysqlite_connection_init(pysqlite_Connection* self, PyObject* args, PyObject
     self->NotSupportedError     = pysqlite_NotSupportedError;
 
     self->initialized = 1;
-    self->isolation_level = NULL;
-    if (pysqlite_connection_set_isolation_level(self, isolation_level) < 0) {
-        Py_DECREF(isolation_level);
-        self->initialized = 0;
-        return -1;
-    }
-    Py_DECREF(isolation_level);
-
     return 0;
 }
 
@@ -327,10 +326,11 @@ PyObject* pysqlite_connection_cursor(pysqlite_Connection* self, PyObject* args, 
 }
 
 Py_LOCAL_INLINE(int)
-_is_connection_initialized(pysqlite_Connection* con) {
+_is_connection_initialized(pysqlite_Connection* con)
+{
     if (!con->initialized) {
         PyErr_SetString(pysqlite_ProgrammingError,
-                        "Base Connection.__init__ not called.");
+                        "Base Connection.__init__() wasn't called or failed.");
         return 0;
     }
     return 1;
@@ -417,13 +417,14 @@ error:
     }
 }
 
-PyObject* pysqlite_connection_commit(pysqlite_Connection* self, PyObject* args)
+Py_LOCAL_INLINE(PyObject*)
+_commit_connection(pysqlite_Connection* self, PyObject* args)
 {
     int rc;
     const char* tail;
     sqlite3_stmt* statement;
 
-    if (!pysqlite_check_thread(self) || !pysqlite_check_connection(self)) {
+    if (!pysqlite_check_thread(self)) {
         return NULL;
     }
 
@@ -457,6 +458,14 @@ error:
     } else {
         Py_RETURN_NONE;
     }
+}
+
+PyObject* pysqlite_connection_commit(pysqlite_Connection* self, PyObject* args)
+{
+    if (!pysqlite_check_connection(self)) {
+        return NULL;
+    }
+    return _commit_connection(self, args);
 }
 
 PyObject* pysqlite_connection_rollback(pysqlite_Connection* self, PyObject* args)
@@ -1146,13 +1155,11 @@ static PyObject* pysqlite_connection_get_in_transaction(pysqlite_Connection* sel
     Py_RETURN_FALSE;
 }
 
-static int pysqlite_connection_set_isolation_level(pysqlite_Connection* self, PyObject* isolation_level)
+Py_LOCAL_INLINE(int)
+_set_isolation_level(pysqlite_Connection* self, PyObject* isolation_level)
 {
-    if (!pysqlite_check_connection(self)) {
-        return -1;
-    }
     if (isolation_level == Py_None) {
-        PyObject *res = pysqlite_connection_commit(self, NULL);
+        PyObject *res = _commit_connection(self, NULL);
         if (!res) {
             return -1;
         }
@@ -1193,6 +1200,14 @@ static int pysqlite_connection_set_isolation_level(pysqlite_Connection* self, Py
     Py_INCREF(isolation_level);
     Py_XSETREF(self->isolation_level, isolation_level);
     return 0;
+}
+
+static int pysqlite_connection_set_isolation_level(pysqlite_Connection* self, PyObject* isolation_level)
+{
+    if (!pysqlite_check_connection(self)) {
+        return -1;
+    }
+    return _set_isolation_level(self, isolation_level);
 }
 
 PyObject* pysqlite_connection_call(pysqlite_Connection* self, PyObject* args, PyObject* kwargs)

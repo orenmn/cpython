@@ -1,0 +1,2 @@
+Prevent crashes in `sqlite3` when using uninitialized `sqlite3.Connection`
+objects. Patch by Oren Milman.

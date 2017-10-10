@@ -198,8 +198,8 @@ class RegressionTests(unittest.TestCase):
 
     def CheckConnectionConstructorCallCheck(self):
         """
-        Verifies that connection methods check whether base class __init__ was
-        called.
+        Verifies that connection methods, getters and setters check whether
+        base class __init__ was called successfully.
         """
         class Connection(sqlite.Connection):
             def __init__(self, name):
@@ -208,6 +208,21 @@ class RegressionTests(unittest.TestCase):
         con = Connection(":memory:")
         with self.assertRaises(sqlite.ProgrammingError):
             cur = con.cursor()
+        with self.assertRaises(sqlite.ProgrammingError):
+            con.close()
+        with self.assertRaises(sqlite.ProgrammingError):
+            con.isolation_level
+        with self.assertRaises(sqlite.ProgrammingError):
+            con.isolation_level = None
+
+        # Check the case in which Connection.__init__ was called but failed.
+        con = sqlite.Connection.__new__(sqlite.Connection)
+        try:
+            con.__init__(":memory:", isolation_level='invalid isolation level')
+        except ValueError:
+            pass
+        with self.assertRaises(sqlite.ProgrammingError):
+            con.cursor()
 
     def CheckCursorRegistration(self):
         """
