@@ -93,7 +93,7 @@ int pysqlite_connection_init(pysqlite_Connection* self, PyObject* args, PyObject
         return -1;
     }
 
-    self->initialized = 1;
+    self->initialized = 0;
 
     self->begin_statement = NULL;
 
@@ -137,12 +137,6 @@ int pysqlite_connection_init(pysqlite_Connection* self, PyObject* args, PyObject
     } else {
         Py_INCREF(isolation_level);
     }
-    self->isolation_level = NULL;
-    if (pysqlite_connection_set_isolation_level(self, isolation_level) < 0) {
-        Py_DECREF(isolation_level);
-        return -1;
-    }
-    Py_DECREF(isolation_level);
 
     self->statement_cache = (pysqlite_Cache*)PyObject_CallFunction((PyObject*)&pysqlite_CacheType, "Oi", self, cached_statements);
     if (PyErr_Occurred()) {
@@ -198,6 +192,15 @@ int pysqlite_connection_init(pysqlite_Connection* self, PyObject* args, PyObject
     self->ProgrammingError      = pysqlite_ProgrammingError;
     self->NotSupportedError     = pysqlite_NotSupportedError;
 
+    self->initialized = 1;
+    self->isolation_level = NULL;
+    if (pysqlite_connection_set_isolation_level(self, isolation_level) < 0) {
+        Py_DECREF(isolation_level);
+        self->initialized = 0;
+        return -1;
+    }
+    Py_DECREF(isolation_level);
+
     return 0;
 }
 
@@ -236,6 +239,7 @@ void pysqlite_do_all_statements(pysqlite_Connection* self, int action, int reset
 
 void pysqlite_connection_dealloc(pysqlite_Connection* self)
 {
+    self->initialized = 0;
     Py_XDECREF(self->statement_cache);
 
     /* Clean up if user has not called .close() explicitly. */
@@ -322,11 +326,21 @@ PyObject* pysqlite_connection_cursor(pysqlite_Connection* self, PyObject* args, 
     return cursor;
 }
 
+Py_LOCAL_INLINE(int)
+_is_connection_initialized(pysqlite_Connection* con) {
+    if (!con->initialized) {
+        PyErr_SetString(pysqlite_ProgrammingError,
+                        "Base Connection.__init__ not called.");
+        return 0;
+    }
+    return 1;
+}
+
 PyObject* pysqlite_connection_close(pysqlite_Connection* self, PyObject* args)
 {
     int rc;
 
-    if (!pysqlite_check_thread(self)) {
+    if (!pysqlite_check_thread(self) || !_is_connection_initialized(self)) {
         return NULL;
     }
 
@@ -355,8 +369,7 @@ PyObject* pysqlite_connection_close(pysqlite_Connection* self, PyObject* args)
  */
 int pysqlite_check_connection(pysqlite_Connection* con)
 {
-    if (!con->initialized) {
-        PyErr_SetString(pysqlite_ProgrammingError, "Base Connection.__init__ not called.");
+    if (!_is_connection_initialized(con)) {
         return 0;
     }
 
@@ -1106,6 +1119,9 @@ int pysqlite_check_thread(pysqlite_Connection* self)
 
 static PyObject* pysqlite_connection_get_isolation_level(pysqlite_Connection* self, void* unused)
 {
+    if (!pysqlite_check_connection(self)) {
+        return NULL;
+    }
     Py_INCREF(self->isolation_level);
     return self->isolation_level;
 }
@@ -1132,6 +1148,9 @@ static PyObject* pysqlite_connection_get_in_transaction(pysqlite_Connection* sel
 
 static int pysqlite_connection_set_isolation_level(pysqlite_Connection* self, PyObject* isolation_level)
 {
+    if (!pysqlite_check_connection(self)) {
+        return -1;
+    }
     if (isolation_level == Py_None) {
         PyObject *res = pysqlite_connection_commit(self, NULL);
         if (!res) {
